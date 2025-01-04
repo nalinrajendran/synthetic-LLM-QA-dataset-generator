@@ -11,8 +11,7 @@ client = OpenAI(
     api_key='ollama', 
 )
 
-
-
+#to-do change template to match Llama3.1 chat response template
 template =  {
     "question": " ",
     "answer": " "
@@ -24,14 +23,13 @@ single_shot =  {
     },
 
 def fix_json (crptd_json):
-
     messages = [
     {'role': 'system', 'content': f'You are an API that converts the wrongly formatted JSON into a properly fomatted one by following this template : {template} . Only respond with the JSON and no additional text. \n.'},
     {'role': 'user', 'content': 'Wrong JSON: ' + crptd_json}
     ]
 
     response = client.chat.completions.create(
-        model="gemma:2b",
+        model="llama3.1:latest", #"gemma:2b" ,
         messages=messages,
         max_tokens=2048,
         n=1,
@@ -39,7 +37,6 @@ def fix_json (crptd_json):
         temperature=1,
 
     )
-
 
     response_text = response.choices[0].message.content.strip()
     # correct corrupted json with rule-based function
@@ -52,9 +49,9 @@ def fix_json (crptd_json):
         print("The JSON is not valid, reformatting again.")
         fix_json (crptd_json)
         return []
-import json
 
 import json
+import re
 
 def correct_corrupted_json(corrupted_json_str):
     # Attempt to correct common JSON issues
@@ -84,15 +81,9 @@ def correct_corrupted_json(corrupted_json_str):
         except json.JSONDecodeError as e:
             raise ValueError(f"Unable to correct JSON: {e}")
 
-# Example usage
-corrupted_json_str = '''{
-  "question": "What is AI/ML?",
-  "answer": "Artificial Intelligence (AI) and Machine Learning (ML) are a set of technologies that have revolutionized how we live and work. AI has led to new types of applications, such as facial recognition, machine learning, and neural networks, while ML is a subfield of AI that uses data and algorithms to train models that can make predictions or decisions on new data."
-'''
-
-corrected_json = correct_corrupted_json(corrupted_json_str)
-print(json.dumps(corrected_json, indent=2))
-
+def is_valid_json_structure(response_text: str) -> bool:
+            """Check if the text has valid JSON structure using regex pattern matching."""
+            return bool(re.match(r'^[\s]*\{.*\}[\s]*$', response_text, re.DOTALL))
 
 
 def generate_questions_answers(text_chunk):
@@ -103,21 +94,26 @@ def generate_questions_answers(text_chunk):
     {'role': 'user', 'content': 'Text: ' + text_chunk}
     ]
 
-
     response = client.chat.completions.create(
-        model="gemma:2b",
+        model="llama3.1:latest", #"gemma:2b",
         messages=messages,
         max_tokens=2048,
         n=1,
         stop=None,
         temperature=0.7,
-
     )
-
 
     response_text = response.choices[0].message.content.strip()
     try:
-        correct_corrupted_json(response_text)
+        #test response_text for json validity before calling json.loads and skip if invalid
+       
+        # Check if response_text has valid JSON structure
+        if not is_valid_json_structure(response_text):
+            print("Invalid JSON structure")
+            return []
+        if not response_text.strip().startswith('{') or not response_text.strip().endswith('}'):
+            print("Invalid JSON format - missing braces")
+            return []
 
         json_data = json.loads(response_text)
         print(json_data)
@@ -125,12 +121,12 @@ def generate_questions_answers(text_chunk):
     except json.JSONDecodeError as e:
         print(str(e))
         print("Error: Response is not valid JSON.... Trying to fix the JSON.")
-        correct_corrupted_json(response_text)
-        fix_json(json.loads(response_text))
+        #correct_corrupted_json(response_text)
+        #fix_json(response_text)
         return []
-
-
-
+    finally:
+        #continue and skip this value
+        pass
 
 def extract_text_from_pdf(file_path):
     pdf_file_obj = open(file_path, 'rb')
@@ -144,9 +140,6 @@ def extract_text_from_pdf(file_path):
     print(text[:1000])
     return text
 
-
-
-
 def process_text(text: str, chunk_size: int = 4000) -> List[dict]:
     text_chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
     all_responses = []
@@ -159,7 +152,6 @@ def process_text(text: str, chunk_size: int = 4000) -> List[dict]:
     print(all_responses[:3])
     return all_responses
 
-
 # get pdf name from user in commandline input parameter
 # if argv[1] is not provided, then provide an error message and exit
 if len(sys.argv) < 2:
@@ -167,8 +159,17 @@ if len(sys.argv) < 2:
     sys.exit(1)
 pdf_name = sys.argv[1]
 
-
-text = extract_text_from_pdf(pdf_name)
+try:
+    text = extract_text_from_pdf(pdf_name)
+except FileNotFoundError:
+    print(f"Error: PDF file '{pdf_name}' not found.")
+    sys.exit(1)
+except PyPDF2.PdfReadError:
+    print(f"Error: Unable to read PDF file '{pdf_name}'. File may be corrupted or invalid.")
+    sys.exit(1)
+except Exception as e:
+    print(f"Unexpected error while reading PDF: {str(e)}")
+    sys.exit(1)
 responses = {"responses": process_text(text)}
 
 
@@ -176,3 +177,17 @@ with open('responses.json', 'w') as f:
     json.dump(responses, f, indent=2)
 
 
+import csv
+
+instruction = "You will answer questions about Machine Learning"
+
+with open('responses.json', 'r', encoding='utf-8') as f:
+    responses = json.load(f)
+
+with open('responses.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    fieldnames = ['prompt', 'question', 'answer']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for response in responses['responses']:
+        if 'question' in response and 'answer' in response:
+            writer.writerow({'prompt': instruction, 'question': response['question'], 'answer': response['answer']})
