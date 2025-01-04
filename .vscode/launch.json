@@ -1,0 +1,24 @@
+{
+    "configurations": [
+      {
+        "type": "debugpy",
+        "request": "launch",
+        "name": "Launch Program",
+        "program": "${workspaceFolder}/${input:programName}",
+        "args": ["${input:pdfFileName}"]
+      }
+    ],
+    "inputs": [
+      {
+        "type": "pickString",
+        "id": "programName",
+        "description": "Select the Python file to debug",
+        "options": ["chunking.py", "json_to_csv.py", "synth-openai.py"]
+      },
+      {
+        "type": "promptString",
+        "id": "pdfFileName",
+        "description": "Enter the PDF file name"
+      }
+    ]
+  }
