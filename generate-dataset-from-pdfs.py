@@ -5,7 +5,19 @@ import json
 from typing import List
 from tqdm import tqdm
 import PyPDF2
+from prompt_toolkit.shortcuts import radiolist_dialog
+import re
+import ollama
+import subprocess
+from json_to_csv import convert_json_to_csv
 
+def install_requirements():
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
+        print("Successfully installed required packages")
+    except subprocess.CalledProcessError:
+        print("Failed to install required packages")
+        sys.exit(1)
 
 client = OpenAI(
     base_url = 'http://localhost:11434/v1',
@@ -51,8 +63,6 @@ def fix_json (crptd_json):
         fix_json (crptd_json)
         return []
 
-import json
-import re
 
 def correct_corrupted_json(corrupted_json_str):
     # Attempt to correct common JSON issues
@@ -87,7 +97,7 @@ def is_valid_json_structure(response_text: str) -> bool:
             return bool(re.match(r'^[\s]*\{.*\}[\s]*$', response_text, re.DOTALL))
 
 
-def generate_questions_answers(text_chunk):
+def generate_questions_answers(text_chunk, model="llama3.1:latest"):
 
     messages = [
     {'role': 'system', 'content': 'You are an API that converts bodies of text into a single question and answer into a valid JSON format. Each JSON " \
@@ -96,7 +106,7 @@ def generate_questions_answers(text_chunk):
     ]
 
     response = client.chat.completions.create(
-        model="llama3.1:latest", #"gemma:2b",
+        model=model,#"gemma:2b",
         messages=messages,
         max_tokens=2048,
         n=1,
@@ -158,50 +168,75 @@ def process_text(text: str, chunk_size: int = 4000) -> List[dict]:
 if len(sys.argv) < 3:
     print("Usage: python generate-dataset-from-pdfs.py [--file <filename> | --dir <directory>]")
     sys.exit(1)
-
+pdfs = []
 arg_type = sys.argv[1]
-path = sys.argv[2]
+sourcepath = sys.argv[2]
 
-
-if arg_type == '--file':
-    # Process single PDF
-    if not os.path.exists(path):
-        print(f"Error: PDF file '{path}' not found.")
+def get_pdfs():
+    if arg_type == '--file':
+        # Process single PDF
+        if not os.path.exists(path):
+            print(f"Error: PDF file '{sourcepath}' not found.")
+            sys.exit(1)
+        pdfs = [sourcepath]
+    elif arg_type == '--dir':
+        # Process all PDFs in specified directory
+        if not os.path.exists(sourcepath):
+            print(f"Error: Directory '{sourcepath}' not found.")
+            sys.exit(1)
+        pdfs = [os.path.join(sourcepath, f) for f in os.listdir(sourcepath) if f.endswith('.pdf')]
+        if not pdfs:
+            print(f"No PDF files found in directory '{sourcepath}'.")
+            sys.exit(1)
+    else:
+        print("Invalid argument. Use --file or --dir.")
         sys.exit(1)
-    pdfs = [path]
-elif arg_type == '--dir':
-    # Process all PDFs in specified directory
-    if not os.path.exists(path):
-        print(f"Error: Directory '{path}' not found.")
-        sys.exit(1)
-    pdfs = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.pdf')]
-    if not pdfs:
-        print(f"No PDF files found in directory '{path}'.")
-        sys.exit(1)
-else:
-    print("Invalid argument. Use --file or --dir.")
-    sys.exit(1)
+    return pdfs
 
-for pdf in pdfs:
-    print(f"Processing PDF: {pdf}")
-    try:
-        text = extract_text_from_pdf(pdf)
-    except FileNotFoundError:
-        print(f"Error: PDF file '{pdf}' not found.")
-        continue
-    except PyPDF2.PdfReadError:
-        print(f"Error: Unable to read PDF file '{pdf}'. File may be corrupted or invalid.")
-        continue
-    except Exception as e:
-        print(f"Unexpected error while reading PDF: {str(e)}")
-        continue
-    responses = {"responses": process_text(text)}
-    # Save responses to JSON file
-    # strip the .pdf extension from the pdf file name
-    pdf = os.path.splitext(pdf)[0]
-    with open(f'{pdf}.json', 'w') as f:
-        json.dump(responses, f, indent=2)
-        print(f"Saved responses to: {pdf}.json")
+def main():
+    # select from available ollama models
+    available_models = ollama.list()
 
-print("All PDFs processed successfully.")
+    # Get only the name from the REST API response
+    available_models=[model.model for model in available_models.models]
+    print("Available models: ", available_models)
+        
+    # Prompt the user to select the model for Q&A generation
+    qa_model = radiolist_dialog(
+        title="Select Model",
+        text="Please select the model to use for Q&A generation:",
+        values=[(model, model) for model in available_models],
+        default=available_models[0],
+    ).run()
+    # get pdfs from the commandline arguments
+    pdfs = get_pdfs()
+    # Process each PDF
+    for pdf in pdfs:
+        print(f"Processing PDF: {pdf}")
+        try:
+            text = extract_text_from_pdf(pdf)
+        except FileNotFoundError:
+            print(f"Error: PDF file '{pdf}' not found.")
+            continue
+        except PyPDF2.PdfReadError:
+            print(f"Error: Unable to read PDF file '{pdf}'. File may be corrupted or invalid.")
+            continue
+        except Exception as e:
+            print(f"Unexpected error while reading PDF: {str(e)}")
+            continue
+        responses = {"responses": process_text(text), "model": qa_model}
+        # Save responses to JSON file
+        # strip the .pdf extension from the pdf file name
+        pdf = os.path.splitext(pdf)[0]
+        with open(f'{pdf}.json', 'w') as f:
+            json.dump(responses, f, indent=2)
+            print(f"Saved responses to: {pdf}.json")
+    # Convert JSON files to CSV
+    convert_json_to_csv(sourcepath,output_datasets='output_datasets' )
+    print("All PDFs processed successfully.")
 
+
+# Install requirements when module is run
+if __name__ == '__main__':
+    install_requirements()
+    main()

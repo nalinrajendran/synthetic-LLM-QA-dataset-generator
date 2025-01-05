@@ -1,24 +1,25 @@
 {
   "responses": [
     {
-      "question": "What is the primary characteristic of classical Greek Art?",
-      "answer": "Heroic realism"
+      "question": "What is considered the basic feature of classical Greek Art?",
+      "answer": "Heroic realism: sculptors represented perfect human bodies in movement or repose."
     },
     {
-      "question": "What architectural styles and innovations emerged during the Roman period (850 BC to 476 AD)?",
-      "answer": "The Romans adapted architecture to their pragmatic way of life, developing new complex constructions with achievements in engineering like the arch, vault, and dome, as well as the invention of concrete facilitating public structures like aqueducts, baths, and amphitheatres."
+      "question": "What architectural styles and innovations emerged during the Roman period?",
+      "answer": "The Romans adapted architecture to their pragmatic and materialistic way of life, developing new complex constructions using arches, vaults, domes, and concrete."
     },
     {
-      "question": "What were the characteristics of the Baroque style in art?",
-      "answer": "The Baroque style was characterized by sculptures with richly decorated details, impressive statues and structures with grandiose movements and postures like a theatrical performance. It was often represented as a second phase of Renaissance, with an emphasis on grandeur and drama."
+      "question": "What was Art Nouveau, and how did it influence the arts and architecture in Europe?",
+      "answer": "Art Nouveau was an international trend that developed between 1880 and 1920, focusing on traditional craftsmanship, medieval, romantic, or folk styles of decoration, and was anti-industrial. It had a strong influence on the arts and architecture in Europe until it was displaced by Modernism in the 1930s."
     },
     {
-      "question": "What was Art Nouveau?",
-      "answer": "Art Nouveau was an international trend in the decorative and fine arts that developed between about 1880 and 1920, focusing on traditional craftsmanship and often using medieval, romantic, or folk styles of decoration."
+      "question": "Who is considered one of the pioneers of abstract painting with Neo-Plasticism (1917-1931)?",
+      "answer": "Mondrian"
     },
     {
-      "question": "What is Pop Art?",
-      "answer": "Pop Art (1950-1970) was a major post-war movement which exhibited mass-production merchandise with irony and fun."
+      "question": "What was a major post-war movement in the art world that exhibited mass-production merchandise with irony and fun?",
+      "answer": "Pop Art"
     }
-  ]
+  ],
+  "model": "mistral:latest"
 }
