@@ -1,0 +1,24 @@
+{
+  "responses": [
+    {
+      "question": "What is the primary characteristic of classical Greek Art?",
+      "answer": "Heroic realism"
+    },
+    {
+      "question": "What architectural styles and innovations emerged during the Roman period (850 BC to 476 AD)?",
+      "answer": "The Romans adapted architecture to their pragmatic way of life, developing new complex constructions with achievements in engineering like the arch, vault, and dome, as well as the invention of concrete facilitating public structures like aqueducts, baths, and amphitheatres."
+    },
+    {
+      "question": "What were the characteristics of the Baroque style in art?",
+      "answer": "The Baroque style was characterized by sculptures with richly decorated details, impressive statues and structures with grandiose movements and postures like a theatrical performance. It was often represented as a second phase of Renaissance, with an emphasis on grandeur and drama."
+    },
+    {
+      "question": "What was Art Nouveau?",
+      "answer": "Art Nouveau was an international trend in the decorative and fine arts that developed between about 1880 and 1920, focusing on traditional craftsmanship and often using medieval, romantic, or folk styles of decoration."
+    },
+    {
+      "question": "What is Pop Art?",
+      "answer": "Pop Art (1950-1970) was a major post-war movement which exhibited mass-production merchandise with irony and fun."
+    }
+  ]
+}
