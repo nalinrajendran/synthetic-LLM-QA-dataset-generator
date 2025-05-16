@@ -2,6 +2,14 @@
 
 This script is designed to generate a question-answer dataset from a given text, specifically from a PDF document. It uses the OLLAMA API, an OpenAI compatible API endpoint, to generate questions and answers based on the text content.
 
+# Revised version
+Based on original version by [nalinrajendran
+synthetic-LLM-QA-dataset-generator](https://github.com/nalinrajendran/synthetic-LLM-QA-dataset-generator) and includes concepts from [TraoreMorike
+synthetic-LLM-QA-dataset-generator](https://github.com/TraoreMorike/synthetic-LLM-QA-dataset-generator/tree/main)
+
+This version fixes issues with JSON and provides a dialog to select the LLM Model to use from the locally available Ollama models, as well as processes multiple PDFs from a directory
+
+
 ## Key Features
 
 - **Extract Text from PDF**: The script can extract text from a PDF document using the PyPDF2 library.
